@@ -3598,6 +3598,12 @@ static mspResult_e mspProcessSensorCommand(uint16_t cmdMSP, sbuf_t *src)
             mspPitotmeterReceiveNewData(sbufPtr(src));
             break;
 #endif
+
+#if defined(USE_VISION)
+        case MSP2_SENSOR_VISION:
+            mspVisionReceiveNewData(sbufPtr(src));
+            break;
+#endif
     }
 
     return MSP_RESULT_NO_REPLY;

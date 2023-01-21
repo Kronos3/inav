@@ -1,0 +1,1 @@
+../../cmake-build-debug/src/main/target/SPEEDYBEEF405V3/SPEEDYBEEF405V3/settings_generated.h

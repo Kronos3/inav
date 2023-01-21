@@ -55,3 +55,6 @@ typedef bool (*sensorTempReadFuncPtr)(struct temperatureDev_s *tempDev, int16_t 
 struct opflowDev_s;
 typedef bool (*sensorOpflowInitFuncPtr)(struct opflowDev_s *mag);
 typedef bool (*sensorOpflowUpdateFuncPtr)(struct opflowDev_s *mag);
+struct visionDev_s;
+typedef bool (*sensorVisionInitFuncPtr)(struct visionDev_s *vis);
+typedef bool (*sensorVisionUpdateFuncPtr)(struct visionDev_s *vis);

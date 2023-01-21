@@ -21,6 +21,7 @@ cov-int*
 /downloads/
 /debug/
 /release/
+/cmake-build-*/
 
 # script-generated files
 docs/Manual.pdf

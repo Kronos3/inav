@@ -198,6 +198,10 @@ main_sources(COMMON_SRC
     drivers/opflow/opflow_virtual.c
     drivers/opflow/opflow_virtual.h
 
+    drivers/vision/vision.h
+    drivers/vision/vision_virtual.h
+    drivers/vision/vision_virtual.c
+
     drivers/osd.c
     drivers/osd.h
     drivers/persistent.c
@@ -429,6 +433,8 @@ main_sources(COMMON_SRC
     sensors/irlock.h
     sensors/temperature.c
     sensors/temperature.h
+    sensors/vision.c
+    sensors/vision.h
 
     blackbox/blackbox.c
     blackbox/blackbox.h

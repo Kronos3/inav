@@ -45,6 +45,7 @@
 #define INAV_BARO_TIMEOUT_MS                200     // Baro timeout
 #define INAV_SURFACE_TIMEOUT_MS             400     // Surface timeout    (missed 3 readings in a row)
 #define INAV_FLOW_TIMEOUT_MS                200
+#define INAV_VISION_TIMEOUT_MS              100     // Vision timeout
 
 #define CALIBRATING_GRAVITY_TIME_MS         2000
 
@@ -132,6 +133,15 @@ typedef struct {
 } navPositionEstimatorESTIMATE_t;
 
 typedef struct {
+    timeUs_t lastUpdateTime; // Last update time(us)
+    bool     isValid;
+
+    // 3D position estimates
+    fpVector3_t pos;
+    fpVector3_t vel;
+} navPositionEstimatorVISION_t;
+
+typedef struct {
      timeUs_t               lastUpdateTime;
     fpVector3_t             accelNEU;
     fpVector3_t             accelBias;
@@ -148,6 +158,7 @@ typedef enum {
     EST_FLOW_VALID              = (1 << 4),
     EST_XY_VALID                = (1 << 5),
     EST_Z_VALID                 = (1 << 6),
+    EST_VISION_VALID              = (1 << 7)
 } navPositionEstimationFlags_e;
 
 typedef struct {
@@ -166,6 +177,7 @@ typedef struct {
     navPositionEstimatorSURFACE_t surface;
     navPositionEstimatorPITOT_t pitot;
     navPositionEstimatorFLOW_t  flow;
+    navPositionEstimatorVISION_t vision;
 
     // IMU data
     navPosisitonEstimatorIMU_t  imu;

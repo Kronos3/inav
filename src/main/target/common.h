@@ -99,6 +99,9 @@
 #define USE_PITOT_MS4525
 #define USE_PITOT_MSP
 
+// iNAV extended sensors
+#define USE_VISION
+
 #define USE_1WIRE
 #define USE_1WIRE_DS2482
 

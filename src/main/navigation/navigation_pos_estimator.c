@@ -477,7 +477,11 @@ static bool navIsAccelerationUsable(void)
 
 static bool navIsHeadingUsable(void)
 {
-    if (sensors(SENSOR_GPS)) {
+    if (sensors(SENSOR_VISION)) {
+        return true;
+    }
+
+    else if (sensors(SENSOR_GPS)) {
         // If we have GPS - we need true IMU north (valid heading)
         return isImuHeadingValid();
     }
@@ -521,6 +525,10 @@ static uint32_t calculateCurrentValidityFlags(timeUs_t currentTimeUs)
 
     if (posEstimator.est.epv < positionEstimationConfig()->max_eph_epv) {
         newFlags |= EST_Z_VALID;
+    }
+
+    if (sensors(SENSOR_VISION) && posEstimator.vision.isValid && ((currentTimeUs - posEstimator.vision.lastUpdateTime) < MS2US(INAV_VISION_TIMEOUT_MS))) {
+        newFlags |= EST_VISION_VALID;
     }
 
     return newFlags;
@@ -633,6 +641,71 @@ static bool estimationCalculateCorrection_Z(estimationContext_t * ctx)
     DEBUG_SET(DEBUG_ALTITUDE, 3, posEstimator.imu.accelNEU.z);  // Vertical acceleration on earth frame
     DEBUG_SET(DEBUG_ALTITUDE, 5, posEstimator.gps.vel.z);       // GPS vertical speed
     DEBUG_SET(DEBUG_ALTITUDE, 7, accGetClipCount());            // Clip count
+
+    return false;
+}
+
+static bool estimationCalculateCorrection_XYZ_VISION(estimationContext_t * ctx)
+{
+    if (ctx->newFlags & EST_VISION_VALID) {
+
+        if (!(ctx->newFlags & EST_Z_VALID)) {
+            ctx->estPosCorr.z = posEstimator.vision.pos.z - posEstimator.est.pos.z;
+            ctx->estVelCorr.z = posEstimator.vision.vel.z - posEstimator.est.vel.z;
+
+            ctx->newEPV = 0;
+        }
+        else {
+            // Trust Vision velocity only if residual/error is less than 2.5 m/s, scale weight according to gaussian distribution
+            const float visionRocResidual = posEstimator.vision.vel.z - posEstimator.est.vel.z;
+            const float visionRocScaler = bellCurve(visionRocResidual, 250.0f);
+            ctx->estVelCorr.z += visionRocScaler * positionEstimationConfig()->w_z_vision_v * visionRocScaler * ctx->dt;
+        }
+
+        if (!(ctx->newFlags & EST_XY_VALID)) {
+            ctx->estPosCorr.x += posEstimator.vision.pos.x - posEstimator.est.pos.x;
+            ctx->estPosCorr.y += posEstimator.vision.pos.y - posEstimator.est.pos.y;
+            ctx->estVelCorr.x += posEstimator.vision.vel.x - posEstimator.est.vel.x;
+            ctx->estVelCorr.y += posEstimator.vision.vel.y - posEstimator.est.vel.y;
+
+            // Reset the error after a SLAM convergence
+            ctx->newEPH = 0;
+        }
+        else {
+            const float visionPosXResidual = posEstimator.vision.pos.x - posEstimator.est.pos.x;
+            const float visionPosYResidual = posEstimator.vision.pos.y - posEstimator.est.pos.y;
+            const float visionVelXResidual = posEstimator.vision.vel.x - posEstimator.est.vel.x;
+            const float visionVelYResidual = posEstimator.vision.vel.y - posEstimator.est.vel.y;
+            const float visionPosResidualMag = calc_length_pythagorean_2D(visionPosXResidual, visionPosYResidual);
+
+            //const float gpsWeightScaler = scaleRangef(bellCurve(gpsPosResidualMag, INAV_GPS_ACCEPTANCE_EPE), 0.0f, 1.0f, 0.1f, 1.0f);
+            const float visionWeightScaler = 1.0f;
+
+            const float w_xy_vision_p = positionEstimationConfig()->w_xy_vision_p * visionWeightScaler;
+            const float w_xy_vision_v = positionEstimationConfig()->w_xy_vision_v * sq(visionWeightScaler);
+
+            // Coordinates
+            ctx->estPosCorr.x += visionPosXResidual * w_xy_vision_p * ctx->dt;
+            ctx->estPosCorr.y += visionPosYResidual * w_xy_vision_p * ctx->dt;
+
+            // Velocity from coordinates
+            ctx->estVelCorr.x += visionPosXResidual * sq(w_xy_vision_p) * ctx->dt;
+            ctx->estVelCorr.y += visionPosYResidual * sq(w_xy_vision_p) * ctx->dt;
+
+            // Velocity from direct measurement
+            ctx->estVelCorr.x += visionVelXResidual * w_xy_vision_v * ctx->dt;
+            ctx->estVelCorr.y += visionVelYResidual * w_xy_vision_v * ctx->dt;
+
+            // Accelerometer bias
+            ctx->accBiasCorr.x -= visionPosXResidual * sq(w_xy_vision_p);
+            ctx->accBiasCorr.y -= visionPosYResidual * sq(w_xy_vision_p);
+
+            /* Adjust EPH */
+            ctx->newEPH = updateEPE(posEstimator.est.eph, ctx->dt, MAX(posEstimator.gps.eph, visionPosResidualMag), w_xy_vision_p);
+        }
+
+        return true;
+    }
 
     return false;
 }

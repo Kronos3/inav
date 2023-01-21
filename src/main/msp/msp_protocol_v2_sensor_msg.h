@@ -31,6 +31,12 @@ typedef struct __attribute__((packed)) {
 } mspSensorOpflowDataMessage_t;
 
 typedef struct __attribute__((packed)) {
+    uint8_t quality;    // [0;255] number of tracks matched
+    float position[3];  // XYZ position in mm
+    float pose[4];      // Quaternion orientation
+} mspSensorVisionDataMessage_t;
+
+typedef struct __attribute__((packed)) {
     uint8_t quality;    // [0;255]
     int32_t distanceMm; // Negative value for out of range
 } mspSensorRangefinderDataMessage_t;

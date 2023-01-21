@@ -1,5 +1,5 @@
 /*
- * This file is part of INAV
+ * This file is part of INAV (Vision Extension)
  *
  * INAV is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,12 +15,8 @@
  * along with INAV.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define MSP2_IS_SENSOR_MESSAGE(x)   ((x) >= 0x1F00 && (x) <= 0x1FFF)
+// INAV Vision specific IDs start from 0x4500
 
-#define MSP2_SENSOR_RANGEFINDER     0x1F01
-#define MSP2_SENSOR_OPTIC_FLOW      0x1F02
-#define MSP2_SENSOR_GPS             0x1F03
-#define MSP2_SENSOR_COMPASS         0x1F04
-#define MSP2_SENSOR_BAROMETER       0x1F05
-#define MSP2_SENSOR_AIRSPEED        0x1F06
-#define MSP2_SENSOR_VISION          0x1F07
+#define MSP2_INAV_VISION_POSE                   0x4500      // Get current aircraft pose (pos,vel,attitude)
+#define MSP2_INAV_VISION_POSE_SET               0x4501      // Feed attitude, position, velocity to controller
+#define MSP2_INAV_VISION_PRM_SET                0x4502      // Set weight parameters for vision inputs
